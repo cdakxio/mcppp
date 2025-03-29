@@ -1,28 +1,22 @@
-
 const express = require("express");
-const { spawn } = require("child_process");
+const { createInterface } = require("@modelcontextprotocol/server-perplexity-ask");
+
 const app = express();
 app.use(express.json());
 
-app.post("/", (req, res) => {
-  const mcp = spawn("node", [
-    "/modelcontextprotocol/perplexity-ask/dist/index.js"
-  ], { env: { ...process.env } });
+const perplexity = createInterface();
 
-  let data = "";
-  mcp.stdout.on("data", chunk => data += chunk);
-  mcp.stderr.on("data", err => console.error("MCP error:", err.toString()));
-  mcp.on("close", () => {
-    try {
-      res.json(JSON.parse(data));
-    } catch (e) {
-      res.status(500).json({ error: "Invalid response", raw: data });
-    }
-  });
-
-  mcp.stdin.write(JSON.stringify(req.body));
-  mcp.stdin.end();
+app.post("/", async (req, res) => {
+  try {
+    const messages = req.body.messages;
+    const response = await perplexity.ask({ messages });
+    res.json(response);
+  } catch (e) {
+    console.error(e);
+    res.status(500).json({ error: "Internal server error" });
+  }
 });
 
-const port = process.env.PORT || 3000;
-app.listen(port, () => console.log(`MCP HTTP wrapper listening on port ${port}`));
+app.listen(3000, () => {
+  console.log("Perplexity Ask MCP Server running on port 3000");
+});
