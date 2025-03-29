@@ -1,21 +1,28 @@
-
 FROM node:18
 
-# Installer git et cloner le repo MCP
-RUN apt update && apt install -y git \
-  && git clone https://github.com/ppl-ai/modelcontextprotocol.git
+# Install git
+RUN apt update && apt install -y git
 
-# Build du MCP Perplexity
-WORKDIR /modelcontextprotocol/perplexity-ask
+# Clone le repo MCP dans /app/modelcontextprotocol
+RUN git clone https://github.com/ppl-ai/modelcontextprotocol.git /app/modelcontextprotocol
+
+# Va dans le dossier du projet
+WORKDIR /app/modelcontextprotocol/perplexity-ask
+
+# Installe les dépendances et build
 RUN npm install && npm run build
 
-# Créer un petit serveur HTTP wrapper
+# Reviens à la racine de l'app
 WORKDIR /app
+
+# Ajoute un serveur Express simple qui utilise le MCP
 COPY index.js .
+
+# Initialise npm et installe express
 RUN npm init -y && npm install express
 
-# Clé API à définir via ENV
+# Définis la clé API dans l’environnement
 ENV PERPLEXITY_API_KEY=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
-EXPOSE 3000
 
+# Lance l'app
 CMD ["node", "index.js"]

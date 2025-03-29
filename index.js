@@ -1,22 +1,20 @@
-const express = require("express");
-const { createInterface } = require("@modelcontextprotocol/server-perplexity-ask");
+const express = require('express');
+const ask = require('./modelcontextprotocol/perplexity-ask/dist/index.js');
 
 const app = express();
 app.use(express.json());
 
-const perplexity = createInterface();
-
-app.post("/", async (req, res) => {
+app.post('/', async (req, res) => {
   try {
-    const messages = req.body.messages;
-    const response = await perplexity.ask({ messages });
+    const response = await ask.default(req.body);
     res.json(response);
-  } catch (e) {
-    console.error(e);
-    res.status(500).json({ error: "Internal server error" });
+  } catch (err) {
+    console.error('Error:', err);
+    res.status(500).json({ error: 'Erreur interne', raw: err.message });
   }
 });
 
-app.listen(3000, () => {
-  console.log("Perplexity Ask MCP Server running on port 3000");
+const PORT = process.env.PORT || 3000;
+app.listen(PORT, () => {
+  console.log(`🚀 MCP Server listening on port ${PORT}`);
 });
